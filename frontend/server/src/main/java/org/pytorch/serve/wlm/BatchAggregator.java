@@ -64,13 +64,12 @@ public class BatchAggregator {
      * @return - true: either a non-stream response or last stream response is sent - false: a
      *     stream response (not include the last stream) is sent
      */
-    public boolean sendResponse(ModelWorkerResponse message) {
-        boolean jobDone = true;
+    public void sendResponse(ModelWorkerResponse message) {
         // TODO: Handle prediction level code
         if (message.getCode() == 200) {
             if (jobs.isEmpty()) {
                 // this is from initial load.
-                return true;
+                return;
             }
             for (Predictions prediction : message.getPredictions()) {
                 String jobId = prediction.getRequestId();
@@ -80,17 +79,7 @@ public class BatchAggregator {
                     throw new IllegalStateException(
                             "Unexpected job in sendResponse() with 200 status code: " + jobId);
                 }
-                if (jobDone) {
-                    String streamNext =
-                            prediction
-                                    .getHeaders()
-                                    .get(
-                                            org.pytorch.serve.util.messages.RequestInput
-                                                    .TS_STREAM_NEXT);
-                    if (streamNext != null && streamNext.equals("true")) {
-                        jobDone = false;
-                    }
-                }
+
                 if (job.getPayload().getClientExpireTS() > System.currentTimeMillis()) {
                     job.response(
                             prediction.getResp(),
@@ -103,6 +92,14 @@ public class BatchAggregator {
                             "Drop response for inference request {} due to client timeout",
                             job.getPayload().getRequestId());
                 }
+                String streamNext =
+                prediction
+                        .getHeaders()
+                        .get(
+                                org.pytorch.serve.util.messages.RequestInput
+                                        .TS_STREAM_NEXT);
+                if (streamNext != null && streamNext.equals("true"))
+                    model.addJob(job);
             }
 
         } else {
@@ -122,10 +119,7 @@ public class BatchAggregator {
                 }
             }
         }
-        if (jobDone) {
-            jobs.clear();
-        }
-        return jobDone;
+        jobs.clear();
     }
 
     public void sendError(BaseModelRequest message, String error, int status) {
