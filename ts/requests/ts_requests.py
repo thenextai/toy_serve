@@ -21,19 +21,6 @@ def preprocess(img_path_or_buf):
     # Converts the image to RGB
     raw_image = raw_image.convert("RGB")
 
-    # Here you should uncomment the T.Compose if you are not using
-    # TorchServe `image_classifier` or `image_segmenter` handlers.
-    # from torchvision import transforms as T
-    # image_processing = T.Compose([
-    #     T.Resize(256),
-    #     T.CenterCrop(224),
-    #     T.ToTensor(),
-    #     T.Normalize(
-    #         mean=[0.485, 0.456, 0.406],
-    #         std=[0.229, 0.224, 0.225]
-    #     )])
-    # raw_image = image_processing(raw_image)
-
     # Transform the PIL.Image into a bytes string (required for the inference)
     raw_image_bytes = BytesIO()
     raw_image.save(raw_image_bytes, format="PNG")
