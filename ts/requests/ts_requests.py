@@ -57,3 +57,15 @@ def predict_yolo(preprocessed_image_bytes):
         output = req.json()
         return output
     return None
+
+def predict_mono_depth(preprocessed_image_bytes):
+    req = requests.post(
+        "http://34.64.185.26:5001/predict_mono_depth",
+        files={"file": preprocessed_image_bytes},
+    )
+    print(req.status_code)
+    if req.status_code == 200:
+        # Convert the output list into a torch.Tensor
+        output = req.json()
+        return output
+    return None
